@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Meditation Timer</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='11' fill='none' stroke='%23d4a855' stroke-width='2'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23d4a855'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <noscript class="noscript">This timer needs JavaScript — the bells are synthesized in the browser.</noscript>
+
+    <main id="setup" class="screen">
+      <h1>Meditation Timer</h1>
+
+      <section class="card">
+        <h2>Presets</h2>
+        <div id="preset-list" class="chips"></div>
+        <form id="preset-form" class="save-row">
+          <input
+            id="preset-name"
+            type="text"
+            maxlength="80"
+            autocomplete="off"
+            placeholder="Save these settings as…"
+          />
+          <button type="submit" class="ghost">Save</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Session</h2>
+        <div class="row">
+          <label for="duration">Duration</label>
+          <span class="control">
+            <input id="duration" type="number" min="0.5" max="480" step="0.5" value="20" />
+            <span class="unit">min</span>
+          </span>
+        </div>
+        <div class="row">
+          <label for="prepare">Lead-in before the first bell</label>
+          <span class="control">
+            <input id="prepare" type="number" min="0" max="300" step="5" value="5" />
+            <span class="unit">sec</span>
+          </span>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Interval bells</h2>
+        <div id="mode-picker" class="segmented" role="radiogroup" aria-label="Interval bells">
+          <button type="button" class="seg" role="radio" data-mode="none">None</button>
+          <button type="button" class="seg" role="radio" data-mode="fixed">Every…</button>
+          <button type="button" class="seg" role="radio" data-mode="random">Random</button>
+        </div>
+        <div class="row" data-for-mode="fixed">
+          <label for="interval-minutes">One bell every</label>
+          <span class="control">
+            <input id="interval-minutes" type="number" min="0.25" max="240" step="0.5" value="5" />
+            <span class="unit">min</span>
+          </span>
+        </div>
+        <div class="row" data-for-mode="random">
+          <label for="interval-count">Bells scattered at random</label>
+          <span class="control">
+            <input id="interval-count" type="number" min="1" max="50" step="1" value="5" />
+            <span class="unit">bells</span>
+          </span>
+        </div>
+        <p id="interval-hint" class="hint"></p>
+      </section>
+
+      <section class="card">
+        <h2>Bells</h2>
+        <div class="row bell-row">
+          <label for="start-voice">Opening</label>
+          <span class="control">
+            <select id="start-voice" data-voice></select>
+            <span class="strikes"
+              >&times;<input id="start-strikes" type="number" min="1" max="5" value="1" aria-label="opening strikes"
+            /></span>
+            <button type="button" class="ghost try" data-try="start-voice">Try</button>
+          </span>
+        </div>
+        <div class="row bell-row" data-for-mode="fixed random">
+          <label for="interval-voice">Interval</label>
+          <span class="control">
+            <select id="interval-voice" data-voice></select>
+            <span class="strikes"
+              >&times;<input id="interval-strikes" type="number" min="1" max="5" value="1" aria-label="interval strikes"
+            /></span>
+            <button type="button" class="ghost try" data-try="interval-voice">Try</button>
+          </span>
+        </div>
+        <div class="row bell-row">
+          <label for="end-voice">Closing</label>
+          <span class="control">
+            <select id="end-voice" data-voice></select>
+            <span class="strikes"
+              >&times;<input id="end-strikes" type="number" min="1" max="5" value="3" aria-label="closing strikes"
+            /></span>
+            <button type="button" class="ghost try" data-try="end-voice">Try</button>
+          </span>
+        </div>
+        <p id="voice-hint" class="hint"></p>
+      </section>
+
+      <section class="card">
+        <h2>Sound</h2>
+        <div class="row">
+          <label for="volume">Volume</label>
+          <span class="control wide">
+            <input id="volume" type="range" min="0" max="1" step="0.01" value="0.7" />
+          </span>
+        </div>
+        <div class="row">
+          <label for="hide-clock">Hide the countdown while sitting</label>
+          <span class="control">
+            <input id="hide-clock" type="checkbox" />
+          </span>
+        </div>
+      </section>
+
+      <button id="begin" class="begin">Begin</button>
+      <p id="error" class="error" role="status" aria-live="polite"></p>
+    </main>
+
+    <main id="session" class="screen hidden">
+      <div class="ring-wrap">
+        <svg class="ring" viewBox="0 0 320 320" aria-hidden="true">
+          <circle class="ring-track" cx="160" cy="160" r="144" />
+          <g id="ring-marks"></g>
+          <circle id="ring-progress" class="ring-progress" cx="160" cy="160" r="144" />
+        </svg>
+        <div class="ring-face">
+          <p id="phase-label" class="phase-label"></p>
+          <p id="countdown" class="countdown" role="timer" aria-live="off">--:--</p>
+          <p id="session-detail" class="session-detail"></p>
+        </div>
+      </div>
+      <div class="session-controls">
+        <button id="pause" class="ghost">Pause</button>
+        <button id="finish" class="ghost">End</button>
+      </div>
+    </main>
+
+    <script type="module" src="/static/js/app.js"></script>
+  </body>
+</html>
